@@ -1,0 +1,44 @@
+{
+  "name": "@seyoon20087/react-loadable",
+  "version": "5.6.0",
+  "license": "MIT",
+  "scripts": {
+    "build": "rm -rf dist && pkgroll --target=node12.0.0 && yarn typecheck",
+    "typecheck": "tsc --noEmit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/seyoon20087/react-loadable-revised"
+  },
+  "exports": {
+    ".": {
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.ts"
+    },
+    "./babel": {
+      "require": "./dist/babel.cjs",
+      "import": "./dist/babel.mjs"
+    },
+    "./webpack": {
+      "require": "./dist/webpack.cjs",
+      "import": "./dist/webpack.mjs",
+      "types": "./dist/webpack.d.ts"
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.28",
+    "@types/react": "^18.2.66",
+    "pkgroll": "^2.0.2",
+    "prettier": "^3.2.5",
+    "typescript": "^5.4.2"
+  },
+  "peerDependencies": {
+    "react": ">= 16.3.0",
+    "webpack": ">=4.41.1 || 5.x"
+  },
+  "engines": {
+    "node": ">=12.0.0"
+  },
+  "packageManager": "yarn@1.22.22+sha1.ac34549e6aa8e7ead463a7407e1c7390f61a6610"
+}
