@@ -1,6 +1,6 @@
 {
   "name": "@seyoon20087/react-loadable",
-  "version": "5.6.0",
+  "version": "5.6.1",
   "license": "MIT",
   "scripts": {
     "build": "rm -rf dist && pkgroll --target=node12.0.0 && yarn typecheck",

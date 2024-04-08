@@ -28,10 +28,21 @@ The Webpack plugin also requires 4.41.1+ or later (it also works on v5).
 To install (if you're on yarn):
 
 ```yarn
-yarn install react-loadable@npm:@seyoon20087/react-loadable
+yarn add react-loadable@npm:@seyoon20087/react-loadable
 ```
 
 Note: The Babel plugin **will not work** if you install it via other means like `yarn install @seyoon20087/react-loadable` itself.
+
+To test it on a current framework (like [Docusaurus][docusaurus]), use the [`resolutions`][yarn-resolutions] or [`overrides`][npm-overrides] feature in your `package.json`.
+
+Example:
+```json
+{
+  "resolutions": {
+    "react-loadable": "npm:@seyoon20087/react-loadable"
+  }
+}
+```
 
 ## API Reference
 
@@ -39,7 +50,7 @@ The API reference is identical, so you should be able to use it without updating
 
 For more information, please refer to the [upstream README](https://github.com/jamiebuilds/react-loadable/tree/master#------------api-docs).
 
-The `Manifest` type from `react-loadable/webpack` the only exception however I don't expect existing projects to break from working.
+The `Manifest` type from `react-loadable/webpack` is the only exception however I don't expect existing projects to break from working.
 
 ## License
 
@@ -50,3 +61,5 @@ This package is licensed under MIT -- see LICENSE in this repo for more details.
 [react-legacy-context-warn-2]: https://github.com/facebook/react/blame/5998a775194f491afa5d3badd9afe9ceaf12845e/packages/react-reconciler/src/ReactFiberClassComponent.js#L413C5-L428C6
 [docusaurus]: https://docusaurus.io/
 [semver-link]: https://semver.org/
+[npm-overrides]: https://docs.npmjs.com/cli/v8/configuring-npm/package-json#overrides
+[yarn-resolutions]: https://classic.yarnpkg.com/en/docs/selective-version-resolutions
