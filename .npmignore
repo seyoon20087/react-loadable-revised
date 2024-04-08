@@ -2,3 +2,4 @@ src
 .prettierignore
 .gitignore
 tsconfig.json
+.DS_Store
