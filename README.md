@@ -12,6 +12,8 @@ This package was published in the hope of resolving this issue like this.
 
 ## Note
 
+Note that the version starts with `5.6.0` to match [semantic versioning][semver-link].
+
 This package is intended as a _drop-in replacement_ for existing projects using `react-loadable`.
 That is, I do NOT plan to add new features, or address tree-shaking issues.
 
@@ -47,3 +49,4 @@ This package is licensed under MIT -- see LICENSE in this repo for more details.
 [react-legacy-context-warn-1]: https://github.com/facebook/react/blame/5998a775194f491afa5d3badd9afe9ceaf12845e/packages/react-reconciler/src/ReactFiberBeginWork.js#L1104-L1110C8
 [react-legacy-context-warn-2]: https://github.com/facebook/react/blame/5998a775194f491afa5d3badd9afe9ceaf12845e/packages/react-reconciler/src/ReactFiberClassComponent.js#L413C5-L428C6
 [docusaurus]: https://docusaurus.io/
+[semver-link]: https://semver.org/
