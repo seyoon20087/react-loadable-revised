@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/seyoon20087/react-loadable-revised"
+    "url": "git+https://github.com/seyoon20087/react-loadable-revised.git"
   },
   "exports": {
     ".": {
