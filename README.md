@@ -21,7 +21,7 @@ For new projects I recommend using [`React.lazy`](https://react.dev/reference/re
 
 ## Requirements
 
-This package uses the new React Context API, so your version of `react` needs to be 16.3.0 or later.
+This package uses the new React Context API (and the `contextType` API), so your version of `react` needs to be 16.6.0 or later.
 
 The Webpack plugin also requires 4.41.1+ or later (it also works on v5).
 

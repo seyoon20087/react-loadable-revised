@@ -159,6 +159,8 @@ function createLoadableComponent(loadFn, options) {
       return init();
     }
 
+    loaded = false;
+
     _componentWillMount() {
       this._loadModule();
     }
@@ -168,6 +170,10 @@ function createLoadableComponent(loadFn, options) {
     }
 
     _loadModule() {
+      if (this.loaded) return;
+
+      this.loaded = true;
+
       if (this.context?.loadable && Array.isArray(opts.modules)) {
         opts.modules.forEach((moduleName) => {
           this.context.loadable.report(moduleName);
