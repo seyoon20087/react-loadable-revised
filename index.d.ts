@@ -1,6 +1,14 @@
-// @ts-nocheck
+// Type definitions for react-loadable 5.5
+// Project: https://github.com/thejameskyle/react-loadable#readme
+// Definitions by: Jessica Franco <https://github.com/Jessidhia>
+//                 Oden S. <https://github.com/odensc>
+//                 Ian Ker-Seymer <https://github.com/ianks>
+//                 Tomek Łaziuk <https://github.com/tlaziuk>
+//                 Ian Mobley <https://github.com/iMobs>
+// Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
+// TypeScript Version: 3.7
 
-import * as React from "react";
+/// <reference types="react" />
 
 declare namespace LoadableExport {
   interface LoadingComponentProps {
@@ -12,8 +20,7 @@ declare namespace LoadableExport {
   }
 
   type Options<Props, Exports extends object> =
-    | OptionsWithoutRender<Props>
-    | OptionsWithRender<Props, Exports>;
+    OptionsWithoutRender<Props> | OptionsWithRender<Props, Exports>;
 
   interface CommonOptions {
     /**
@@ -73,8 +80,10 @@ declare namespace LoadableExport {
     >;
   }
 
-  interface OptionsWithRender<Props, Exports extends object>
-    extends CommonOptions {
+  interface OptionsWithRender<
+    Props,
+    Exports extends object,
+  > extends CommonOptions {
     /**
      * Function returning a promise which returns an object to be passed to `render` on success.
      */
@@ -102,8 +111,10 @@ declare namespace LoadableExport {
     // that has a component as its `default` export.
   }
 
-  interface OptionsWithMap<Props, Exports extends { [key: string]: any }>
-    extends CommonOptions {
+  interface OptionsWithMap<
+    Props,
+    Exports extends { [key: string]: any },
+  > extends CommonOptions {
     /**
      * An object containing functions which return promises, which resolve to an object to be passed to `render` on success.
      */
@@ -188,26 +199,9 @@ declare namespace LoadableExport {
   }
 }
 
-declare const Loadable: LoadableExport.Loadable;
-type LoadableType = LoadableExport.Loadable;
-type LoadingComponentProps = LoadableExport.LoadingComponentProps;
-type Options = LoadableExport.Options;
-type CommonOptions = LoadableExport.CommonOptions;
-type OptionsWithoutRender = LoadableExport.OptionsWithoutRender;
-type OptionsWithRender = LoadableExport.OptionsWithRender;
-type OptionsWithMap = LoadableExport.OptionsWithMap;
-type LoadableComponent = LoadableExport.LoadableComponent;
-type LoadableCaptureProps = LoadableExport.LoadableCaptureProps;
+declare const LoadableExport: LoadableExport.Loadable;
 
-export {
-  Loadable as default,
-  LoadableType as Loadable,
-  LoadingComponentProps,
-  Options,
-  CommonOptions,
-  OptionsWithoutRender,
-  OptionsWithRender,
-  OptionsWithMap,
-  LoadableComponent,
-  LoadableCaptureProps,
-};
+/* tslint:disable-next-line:no-declare-current-package no-single-declare-module */
+declare module "react-loadable" {
+  export = LoadableExport;
+}

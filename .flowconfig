@@ -1,0 +1,8 @@
+[ignore]
+<PROJECT_ROOT>/node_modules/chalk/.*
+
+[include]
+
+[libs]
+
+[options]

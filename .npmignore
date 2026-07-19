@@ -1,5 +1,9 @@
+__fixtures__
+__tests__
+example
 src
-.prettierignore
-.gitignore
-tsconfig.json
-.DS_Store
+tsdown.config.mjs
+webpack.config.js
+.travis.yml
+.flowconfig
+.babelrc

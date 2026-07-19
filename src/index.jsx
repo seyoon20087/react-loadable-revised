@@ -1,11 +1,7 @@
-// @ts-nocheck
-
-import React from "react";
+import { createContext, Component, Children } from "react";
 
 const ALL_INITIALIZERS = [];
 const READY_INITIALIZERS = [];
-
-const CaptureContext = React.createContext(undefined);
 
 function isWebpackReady(getModuleIds) {
   if (typeof __webpack_modules__ !== "object") {
@@ -20,10 +16,12 @@ function isWebpackReady(getModuleIds) {
   });
 }
 
-function load(loader) {
-  let promise = loader();
+const LoadableCaptureContext = createContext(null);
 
-  let state = {
+function load(loader) {
+  const promise = loader();
+
+  const state = {
     loading: true,
     loaded: null,
     error: null,
@@ -45,17 +43,17 @@ function load(loader) {
 }
 
 function loadMap(obj) {
-  let state = {
+  const state = {
     loading: false,
     loaded: {},
     error: null,
   };
 
-  let promises = [];
+  const promises = [];
 
   try {
     Object.keys(obj).forEach((key) => {
-      let result = load(obj[key]);
+      const result = load(obj[key]);
 
       if (!result.loading) {
         state.loaded[key] = result.loaded;
@@ -96,8 +94,8 @@ function resolve(obj) {
 }
 
 function render(loaded, props) {
-  const Loaded = resolve(loaded);
-  return <Loaded {...props} />;
+  const ResolvedComponent = resolve(loaded);
+  return <ResolvedComponent {...props} />;
 }
 
 function createLoadableComponent(loadFn, options) {
@@ -105,7 +103,7 @@ function createLoadableComponent(loadFn, options) {
     throw new Error("react-loadable requires a `loading` component");
   }
 
-  let opts = Object.assign(
+  const opts = Object.assign(
     {
       loader: null,
       loading: null,
@@ -137,10 +135,18 @@ function createLoadableComponent(loadFn, options) {
     });
   }
 
-  return class LoadableComponent extends React.Component {
+  return class LoadableComponent extends Component {
     constructor(props) {
       super(props);
       init();
+
+      // SSR Reporting: Must happen in constructor because
+      // componentDidMount doesn't run on the server.
+      if (this.context && Array.isArray(opts.modules)) {
+        opts.modules.forEach((moduleName) => {
+          this.context.report(moduleName);
+        });
+      }
 
       this.state = {
         error: res.error,
@@ -149,42 +155,25 @@ function createLoadableComponent(loadFn, options) {
         loading: res.loading,
         loaded: res.loaded,
       };
-
-      this._componentWillMount();
     }
 
-    static contextType = CaptureContext;
+    static contextType = LoadableCaptureContext;
 
     static preload() {
       return init();
     }
 
-    loaded = false;
-
-    _componentWillMount() {
+    componentDidMount() {
+      this._mounted = true;
       this._loadModule();
     }
 
-    componentDidMount() {
-      this._mounted = true;
-    }
-
     _loadModule() {
-      if (this.loaded) return;
-
-      this.loaded = true;
-
-      if (this.context?.loadable && Array.isArray(opts.modules)) {
-        opts.modules.forEach((moduleName) => {
-          this.context.loadable.report(moduleName);
-        });
-      }
-
       if (!res.loading) {
         return;
       }
 
-      let setStateWithMountCheck = (newState) => {
+      const setStateWithMountCheck = (newState) => {
         if (!this._mounted) {
           return;
         }
@@ -208,7 +197,7 @@ function createLoadableComponent(loadFn, options) {
         }, opts.timeout);
       }
 
-      let update = () => {
+      const update = () => {
         setStateWithMountCheck({
           error: res.error,
           loaded: res.loaded,
@@ -247,8 +236,9 @@ function createLoadableComponent(loadFn, options) {
 
     render() {
       if (this.state.loading || this.state.error) {
+        const LoadingComponent = opts.loading;
         return (
-          <opts.loading
+          <LoadingComponent
             isLoading={this.state.loading}
             pastDelay={this.state.pastDelay}
             timedOut={this.state.timedOut}
@@ -279,31 +269,19 @@ function LoadableMap(opts) {
 
 Loadable.Map = LoadableMap;
 
-class Capture extends React.Component {
-  _getChildContext() {
-    return {
-      loadable: {
-        report: this.props.report,
-      },
-    };
-  }
-
-  render() {
-    return (
-      <CaptureContext.Provider value={this._getChildContext()}>
-        {this.props.children}
-      </CaptureContext.Provider>
-    );
-  }
-}
+const Capture = ({ report, children }) => (
+  <LoadableCaptureContext.Provider value={{ report }}>
+    {Children.only(children)}
+  </LoadableCaptureContext.Provider>
+);
 
 Loadable.Capture = Capture;
 
 function flushInitializers(initializers) {
-  let promises = [];
+  const promises = [];
 
   while (initializers.length) {
-    let init = initializers.pop();
+    const init = initializers.pop();
     promises.push(init());
   }
 
@@ -328,4 +306,3 @@ Loadable.preloadReady = () => {
 };
 
 export default Loadable;
-export type * from "./index.d.ts";
