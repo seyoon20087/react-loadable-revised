@@ -7,3 +7,4 @@ webpack.config.js
 .travis.yml
 .flowconfig
 .babelrc
+coverage

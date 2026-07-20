@@ -1,4 +1,4 @@
-export default function ({ types: t, template }) {
+export default function ({ types: t }) {
   return {
     visitor: {
       ImportDeclaration(path) {
@@ -37,9 +37,12 @@ export default function ({ types: t, template }) {
           const propertiesMap = {};
 
           properties.forEach((property) => {
-            if (property.type !== "SpreadProperty") {
+            // Safer check: Only map properties that actually have a named identifier key
+            if (property.isObjectProperty() || property.isObjectMethod()) {
               const key = property.get("key");
-              propertiesMap[key.node.name] = property;
+              if (key.isIdentifier()) {
+                propertiesMap[key.node.name] = property;
+              }
             }
           });
 
@@ -50,9 +53,20 @@ export default function ({ types: t, template }) {
           const loaderMethod = propertiesMap.loader.get("value");
           const dynamicImports = [];
 
+          // Traverse using visitors for both Babel v7 (Import) and Babel v8 (ImportExpression)
           loaderMethod.traverse({
             Import(path) {
-              dynamicImports.push(path.parentPath);
+              const callExpr = path.parentPath;
+              if (callExpr.isCallExpression()) {
+                dynamicImports.push({
+                  sourceNode: callExpr.get("arguments")[0].node,
+                });
+              }
+            },
+            ImportExpression(path) {
+              dynamicImports.push({
+                sourceNode: path.get("source").node,
+              });
             },
           });
 
@@ -70,7 +84,7 @@ export default function ({ types: t, template }) {
                         t.identifier("require"),
                         t.identifier("resolveWeak"),
                       ),
-                      [dynamicImport.get("arguments")[0].node],
+                      [dynamicImport.sourceNode],
                     );
                   }),
                 ),
@@ -83,7 +97,7 @@ export default function ({ types: t, template }) {
               t.identifier("modules"),
               t.arrayExpression(
                 dynamicImports.map((dynamicImport) => {
-                  return dynamicImport.get("arguments")[0].node;
+                  return dynamicImport.sourceNode;
                 }),
               ),
             ),

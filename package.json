@@ -25,7 +25,7 @@
     }
   },
   "scripts": {
-    "test": "jest --coverage",
+    "test": "rstest --coverage",
     "build": "tsdown",
     "start": "yarn build && webpack && babel-node example/server.js",
     "prepare": "yarn build"
@@ -41,7 +41,8 @@
     "@babel/plugin-transform-object-assign": "^7.0.0",
     "@babel/preset-env": "^7.1.0",
     "@babel/preset-react": "^7.0.0",
-    "jest": "^30.4.2",
+    "@rstest/core": "^0.11.2",
+    "@rstest/coverage-istanbul": "0.11.2",
     "prettier": "^3.9.5",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
