@@ -37,7 +37,6 @@ export default function ({ types: t }) {
           const propertiesMap = {};
 
           properties.forEach((property) => {
-            // Safer check: Only map properties that actually have a named identifier key
             if (property.isObjectProperty() || property.isObjectMethod()) {
               const key = property.get("key");
               if (key.isIdentifier()) {
@@ -53,8 +52,8 @@ export default function ({ types: t }) {
           const loaderMethod = propertiesMap.loader.get("value");
           const dynamicImports = [];
 
-          // Traverse using visitors for both Babel v7 (Import) and Babel v8 (ImportExpression)
-          loaderMethod.traverse({
+          // Create the visitor object dynamically
+          const traverseVisitors = {
             Import(path) {
               const callExpr = path.parentPath;
               if (callExpr.isCallExpression()) {
@@ -63,12 +62,19 @@ export default function ({ types: t }) {
                 });
               }
             },
-            ImportExpression(path) {
+          };
+
+          // Guard: Only register ImportExpression if the current
+          // Babel version knows what an ImportExpression is.
+          if (typeof t.isImportExpression === "function") {
+            traverseVisitors.ImportExpression = function (path) {
               dynamicImports.push({
                 sourceNode: path.get("source").node,
               });
-            },
-          });
+            };
+          }
+
+          loaderMethod.traverse(traverseVisitors);
 
           if (!dynamicImports.length) return;
 

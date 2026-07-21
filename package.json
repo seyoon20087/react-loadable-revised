@@ -9,25 +9,28 @@
     "type": "git",
     "url": "git+https://github.com/seyoon20087/react-loadable-revised.git"
   },
+  "main": "./lib/index.cjs",
+  "module": "./lib/index.mjs",
   "exports": {
     ".": {
-      "default": "./lib/index.mjs",
       "require": "./lib/index.cjs",
+      "default": "./lib/index.mjs",
       "types": "./index.d.ts"
     },
     "./webpack": {
-      "default": "./lib/webpack.mjs",
-      "require": "./lib/webpack.cjs"
+      "require": "./lib/webpack.cjs",
+      "default": "./lib/webpack.mjs"
     },
     "./babel": {
-      "default": "./lib/babel.mjs",
-      "require": "./lib/babel.cjs"
+      "require": "./lib/babel.cjs",
+      "default": "./lib/babel.mjs"
     }
   },
   "scripts": {
     "test": "rstest --coverage",
     "build": "tsdown",
-    "prepare": "yarn build"
+    "prepare": "yarn build",
+    "format": "prettier --write ."
   },
   "dependencies": {
     "@types/react": "*"
