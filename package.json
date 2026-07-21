@@ -19,7 +19,8 @@
     },
     "./webpack": {
       "require": "./lib/webpack.cjs",
-      "default": "./lib/webpack.mjs"
+      "default": "./lib/webpack.mjs",
+      "types": "./webpack.d.ts"
     },
     "./babel": {
       "require": "./lib/babel.cjs",
