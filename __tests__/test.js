@@ -1,13 +1,7 @@
-"use strict";
-
-// Tell React we are running in a test environment that supports act(...)
-global.IS_REACT_ACT_ENVIRONMENT = true;
-
-const path = require("path");
-const React = require("react");
-// Use @testing-library/react instead of react-test-renderer
-const { render, act } = require("@testing-library/react");
-const Loadable = require("../lib/index.cjs");
+import path from "path";
+import * as React from "react";
+import { render, act } from "@testing-library/react";
+import Loadable from "../src/index.tsx";
 
 function waitFor(delay) {
   return new Promise((resolve) => {
