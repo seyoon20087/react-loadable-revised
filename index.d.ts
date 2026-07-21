@@ -1,13 +1,3 @@
-// Type definitions for react-loadable 5.5
-// Project: https://github.com/thejameskyle/react-loadable#readme
-// Definitions by: Jessica Franco <https://github.com/Jessidhia>
-//                 Oden S. <https://github.com/odensc>
-//                 Ian Ker-Seymer <https://github.com/ianks>
-//                 Tomek Łaziuk <https://github.com/tlaziuk>
-//                 Ian Mobley <https://github.com/iMobs>
-// Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
-// TypeScript Version: 3.7
-
 /// <reference types="react" />
 
 declare namespace LoadableExport {
@@ -145,10 +135,10 @@ declare namespace LoadableExport {
      * This is useful for scenarios where you think the user might do something next and want to load the
      * next component eagerly.
      *
-     * Note: preload() intentionally does not return a promise. You should not be depending on the timing of
-     * preload(). It's meant as a performance optimization, not for creating UI logic.
+     * Note: Changed return type from void to Promise<any> to match actual runtime behavior
+     * and prevent compilation errors when awaiting preloads in tests.
      */
-    preload(): void;
+    preload(): Promise<any>;
   }
 
   interface LoadableCaptureProps {
@@ -201,7 +191,7 @@ declare namespace LoadableExport {
 
 declare const LoadableExport: LoadableExport.Loadable;
 
-/* tslint:disable-next-line:no-declare-current-package no-single-declare-module */
+/* eslint-disable-next-line @definitelytyped/no-declare-current-package */
 declare module "react-loadable" {
   export = LoadableExport;
 }
