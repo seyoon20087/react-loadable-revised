@@ -1,7 +1,7 @@
 import { defineConfig } from "tsdown";
 
 export default defineConfig({
-  entry: ["src/index.jsx", "src/babel.js", "src/webpack.js"],
+  entry: ["src/index.tsx", "src/babel.js", "src/webpack.js"],
   unbundle: true,
   clean: true,
   outputOptions: {
@@ -11,7 +11,7 @@ export default defineConfig({
       symbols: false,
     },
   },
-  dts: false,
+  dts: true,
   format: {
     esm: {
       target: ["node20"],
@@ -19,5 +19,8 @@ export default defineConfig({
     cjs: {
       target: ["node20"],
     },
+  },
+  deps: {
+    neverBundle: ["webpack", "@babel/core", "@babel/types"],
   },
 });

@@ -1,0 +1,41 @@
+{
+  // Visit https://aka.ms/tsconfig to read more about this file
+  "compilerOptions": {
+    /* Target & Environment */
+    "target": "es2022",
+    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+
+    /* Module Resolution (Modern Bundler standard) */
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+
+    /* React / JSX Configuration */
+    "jsx": "react-jsx", // Matches tsdown's default automatic JSX transform
+    "jsxImportSource": "react",
+
+    /* High Performance Type Generation */
+    "declaration": true,
+    "declarationMap": false, // Highly recommended for jumps to source code in monorepos
+    "isolatedDeclarations": true, // Enables tsdown's ultra-fast Oxc-powered .d.ts generation path
+
+    /* Strict Type Checking */
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+
+    "noEmit": true,
+
+    "types": ["node"]
+  },
+  "include": ["./src/*.ts", "./src/*.tsx"]
+}

@@ -2,10 +2,11 @@ __fixtures__
 __tests__
 example
 src
-tsdown.config.mjs
-rstest.config.mjs
+tsdown.config.*
+rstest.config.*
 webpack.config.js
 .travis.yml
 .flowconfig
 .babelrc
 coverage
+tsconfig.json

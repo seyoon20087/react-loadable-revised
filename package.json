@@ -11,20 +11,22 @@
   },
   "main": "./lib/index.cjs",
   "module": "./lib/index.mjs",
+  "types": "./lib/index.d.mts",
   "exports": {
     ".": {
       "require": "./lib/index.cjs",
       "default": "./lib/index.mjs",
-      "types": "./index.d.ts"
+      "types": "./lib/index.d.mts"
     },
     "./webpack": {
       "require": "./lib/webpack.cjs",
       "default": "./lib/webpack.mjs",
-      "types": "./webpack.d.ts"
+      "types": "./lib/webpack.d.mts"
     },
     "./babel": {
       "require": "./lib/babel.cjs",
-      "default": "./lib/babel.mjs"
+      "default": "./lib/babel.mjs",
+      "types": "./lib/babel.d.mts"
     }
   },
   "scripts": {
@@ -34,18 +36,23 @@
     "format": "prettier --write ."
   },
   "dependencies": {
-    "@types/react": "*"
+    "@types/react": "^19.2.17"
   },
   "devDependencies": {
+    "@babel/core": "^8.0.1",
+    "@babel/types": "^8.0.4",
     "@rstest/core": "^0.11.2",
     "@rstest/coverage-istanbul": "0.11.2",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.2",
+    "@types/node": "^26.1.1",
     "jsdom": "^29.1.1",
     "prettier": "^3.9.5",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "tsdown": "^0.22.9"
+    "tsdown": "^0.22.9",
+    "typescript": "^7.0.2",
+    "webpack": "^5.108.4"
   },
   "peerDependencies": {
     "react": ">=16.14.0"
