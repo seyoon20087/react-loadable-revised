@@ -103,13 +103,14 @@ class ReactLoadablePlugin {
 
             let outputFilename = this.filename;
             if (isAbsolute(outputFilename)) {
-              const outputPath = compilation.outputOptions.path || compiler.options.output.path;
+              const outputPath =
+                compilation.outputOptions.path || compiler.options.output.path;
               outputFilename = relative(outputPath, outputFilename);
             }
 
             const source = new compiler.webpack.sources.RawSource(json);
             compilation.emitAsset(outputFilename, source);
-          }
+          },
         );
       });
     } else if (compiler.hooks && compiler.hooks.emit) {
