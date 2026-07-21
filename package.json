@@ -47,6 +47,6 @@
     "tsdown": "^0.22.9"
   },
   "peerDependencies": {
-    "react": "*"
+    "react": ">=16.14.0"
   }
 }
