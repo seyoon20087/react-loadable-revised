@@ -1,5 +1,5 @@
-import path from "path";
-import * as React from "react";
+import { describe, test, beforeEach, afterEach, expect } from "@rstest/core";
+import path from "node:path";
 import { render, act } from "@testing-library/react";
 import Loadable from "../src/index.tsx";
 
