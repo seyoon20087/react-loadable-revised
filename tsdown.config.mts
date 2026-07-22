@@ -14,10 +14,10 @@ export default defineConfig({
   dts: true,
   format: {
     esm: {
-      target: ["node20"],
+      target: ["es2022"],
     },
     cjs: {
-      target: ["node20"],
+      target: ["es2022"], // node 18 or higher
     },
   },
   deps: {
