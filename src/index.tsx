@@ -541,7 +541,7 @@ function flushInitializers(
 
 const preloadAll = (): Promise<void> => {
   return new Promise<void>((resolve, reject) => {
-    flushInitializers(ALL_INITIALIZERS).then(() => resolve(), reject);
+    flushInitializers(ALL_INITIALIZERS).then(resolve, reject);
   });
 };
 
@@ -550,10 +550,7 @@ Loadable.preloadAll = preloadAll;
 const preloadReady = (): Promise<void> => {
   return new Promise<void>((resolve) => {
     // We always will resolve, errors should be handled within loading UIs.
-    flushInitializers(READY_INITIALIZERS).then(
-      () => resolve(),
-      () => resolve(),
-    );
+    flushInitializers(READY_INITIALIZERS).then(resolve, resolve);
   });
 };
 
