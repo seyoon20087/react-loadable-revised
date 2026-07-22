@@ -33,7 +33,8 @@
     "test": "rstest --coverage",
     "build": "tsdown",
     "prepare": "yarn build",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@types/react": "^19.2.17"
