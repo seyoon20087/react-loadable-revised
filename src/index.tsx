@@ -74,15 +74,10 @@ export interface OptionsWithoutRender<Props> extends CommonOptions {
    *
    * Resulting React component receives all the props passed to the generated component.
    */
-  loader: () => Promise<
-    ComponentType<Props> | { default: ComponentType<Props> }
-  >;
+  loader: () => Promise<ComponentType<Props> | { default: ComponentType<Props> }>;
 }
 
-export interface OptionsWithRender<
-  Props,
-  Exports extends object,
-> extends CommonOptions {
+export interface OptionsWithRender<Props, Exports extends object> extends CommonOptions {
   /**
    * Function returning a promise which returns an object to be passed to `render` on success.
    */
@@ -111,7 +106,8 @@ export interface OptionsWithRender<
 }
 
 export type Options<Props, Exports extends object> =
-  OptionsWithoutRender<Props> | OptionsWithRender<Props, Exports>;
+  | OptionsWithoutRender<Props>
+  | OptionsWithRender<Props, Exports>;
 
 export interface OptionsWithMap<
   Props,
@@ -178,10 +174,7 @@ function isWebpackReady(getModuleIds: () => Array<string | number>): boolean {
   }
 
   return getModuleIds().every((moduleId) => {
-    return (
-      typeof moduleId !== "undefined" &&
-      typeof __webpack_modules__[moduleId] !== "undefined"
-    );
+    return typeof moduleId !== "undefined" && typeof __webpack_modules__[moduleId] !== "undefined";
   });
 }
 
@@ -189,9 +182,7 @@ interface LoadableCaptureContextType {
   report: (moduleName: string) => void;
 }
 
-const LoadableCaptureContext = createContext<LoadableCaptureContextType | null>(
-  null,
-);
+const LoadableCaptureContext = createContext<LoadableCaptureContextType | null>(null);
 
 function load<T>(loader: () => Promise<T>): LoadState<T> {
   const promise = loader();
@@ -517,9 +508,7 @@ const Capture: FC<LoadableCaptureProps> = ({ report, children }) => (
 
 Loadable.Capture = Capture;
 
-function flushInitializers(
-  initializers: Array<() => Promise<any> | undefined>,
-): any {
+function flushInitializers(initializers: Array<() => Promise<any> | undefined>): any {
   const promises: Array<Promise<any>> = [];
 
   while (initializers.length) {

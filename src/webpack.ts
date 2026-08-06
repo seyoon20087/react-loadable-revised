@@ -66,24 +66,14 @@ function buildManifest(compiler: webpack.Compiler, compilation: any): Manifest {
     chunk.files.forEach((file: string) => {
       modules.forEach((module: any) => {
         // Safe module ID retrieval
-        const id = compilation.chunkGraph
-          ? compilation.chunkGraph.getModuleId(module)
-          : module.id;
+        const id = compilation.chunkGraph ? compilation.chunkGraph.getModuleId(module) : module.id;
 
-        const name =
-          typeof module.libIdent === "function"
-            ? module.libIdent({ context })
-            : null;
+        const name = typeof module.libIdent === "function" ? module.libIdent({ context }) : null;
 
-        const publicPath = resolveUrl(
-          compilation.outputOptions.publicPath || "",
-          file,
-        );
+        const publicPath = resolveUrl(compilation.outputOptions.publicPath || "", file);
 
         const currentModule =
-          module.constructor.name === "ConcatenatedModule"
-            ? module.rootModule
-            : module;
+          module.constructor.name === "ConcatenatedModule" ? module.rootModule : module;
 
         const rawRequest = (currentModule as any).rawRequest;
         if (rawRequest) {
@@ -108,9 +98,7 @@ export class ReactLoadablePlugin implements webpack.WebpackPluginInstance {
 
   apply(compiler: webpack.Compiler): void {
     const pluginName = "ReactLoadablePlugin";
-    const isWebpack5 = !!(
-      compiler.webpack && (compiler.webpack as any).Compilation
-    );
+    const isWebpack5 = !!(compiler.webpack && (compiler.webpack as any).Compilation);
 
     if (isWebpack5) {
       // Modern Webpack 5 Asset Generation Pipeline
@@ -118,8 +106,7 @@ export class ReactLoadablePlugin implements webpack.WebpackPluginInstance {
         compilation.hooks.processAssets.tap(
           {
             name: pluginName,
-            stage: (compiler.webpack as any).Compilation
-              .PROCESS_ASSETS_STAGE_ADDITIONAL,
+            stage: (compiler.webpack as any).Compilation.PROCESS_ASSETS_STAGE_ADDITIONAL,
           },
           () => {
             const manifest = buildManifest(compiler, compilation);
@@ -128,54 +115,44 @@ export class ReactLoadablePlugin implements webpack.WebpackPluginInstance {
             let outputFilename = this.filename;
             if (isAbsolute(outputFilename)) {
               const outputPath =
-                compilation.outputOptions.path ||
-                compiler.options.output.path ||
-                "";
+                compilation.outputOptions.path || compiler.options.output.path || "";
               outputFilename = relative(outputPath, outputFilename);
             }
 
-            const source = new (compiler.webpack as any).sources.RawSource(
-              json,
-            );
+            const source = new (compiler.webpack as any).sources.RawSource(json);
             compilation.emitAsset(outputFilename, source);
           },
         );
       });
     } else if (compiler.hooks && compiler.hooks.emit) {
       // Legacy Webpack 4 Fallback
-      compiler.hooks.emit.tapAsync(
-        pluginName,
-        (compilation: any, callback: () => void) => {
-          const manifest = buildManifest(compiler, compilation);
-          const json = JSON.stringify(manifest, null, 2);
+      compiler.hooks.emit.tapAsync(pluginName, (compilation: any, callback: () => void) => {
+        const manifest = buildManifest(compiler, compilation);
+        const json = JSON.stringify(manifest, null, 2);
 
-          let outputFilename = this.filename;
-          if (isAbsolute(outputFilename)) {
-            const outputPath = compiler.options.output.path || "";
-            outputFilename = relative(outputPath, outputFilename);
-          }
+        let outputFilename = this.filename;
+        if (isAbsolute(outputFilename)) {
+          const outputPath = compiler.options.output.path || "";
+          outputFilename = relative(outputPath, outputFilename);
+        }
 
-          const source = {
-            source() {
-              return json;
-            },
-            size() {
-              return json.length;
-            },
-          };
+        const source = {
+          source() {
+            return json;
+          },
+          size() {
+            return json.length;
+          },
+        };
 
-          compilation.assets[outputFilename] = source;
-          callback();
-        },
-      );
+        compilation.assets[outputFilename] = source;
+        callback();
+      });
     }
   }
 }
 
-export function getBundles(
-  manifest: Manifest,
-  moduleIds: (string | number)[],
-): Bundle[] {
+export function getBundles(manifest: Manifest, moduleIds: (string | number)[]): Bundle[] {
   return moduleIds.reduce<Bundle[]>((bundles, moduleId) => {
     return bundles.concat(manifest[moduleId] || []);
   }, []);
