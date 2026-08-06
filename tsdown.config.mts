@@ -1,7 +1,7 @@
 import { defineConfig } from "tsdown";
 
 export default defineConfig({
-  entry: ["src/index.tsx", "src/babel.js", "src/webpack.js"],
+  entry: ["src/index.tsx", "src/babel.ts", "src/webpack.ts"],
   unbundle: true,
   clean: true,
   outputOptions: {
