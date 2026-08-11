@@ -445,7 +445,7 @@ function createLoadableComponent<Props>(
         return null;
       }
     }
-  } as any;
+  };
 }
 
 // Main Loadable Factory Function Overloads
