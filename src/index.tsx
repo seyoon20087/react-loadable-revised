@@ -178,9 +178,7 @@ function isWebpackReady(getModuleIds: () => Array<string | number>): boolean {
   });
 }
 
-interface LoadableCaptureContextType {
-  report: (moduleName: string) => void;
-}
+type LoadableCaptureContextType = (moduleName: string) => void;
 
 const LoadableCaptureContext = createContext<LoadableCaptureContextType | null>(null);
 
@@ -335,8 +333,9 @@ function createLoadableComponent<Props>(
       // SSR Reporting: Must happen in constructor because
       // componentDidMount doesn't run on the server.
       if (this.context && Array.isArray(opts.modules)) {
+        const report = this.context;
         opts.modules.forEach((moduleName: string) => {
-          this.context!.report(moduleName);
+          report(moduleName);
         });
       }
 
@@ -501,7 +500,7 @@ function LoadableMap<Props, Exports extends { [key: string]: any }>(
 Loadable.Map = LoadableMap;
 
 const Capture: FC<LoadableCaptureProps> = ({ report, children }) => (
-  <LoadableCaptureContext.Provider value={{ report }}>
+  <LoadableCaptureContext.Provider value={report}>
     {Children.only(children)}
   </LoadableCaptureContext.Provider>
 );
