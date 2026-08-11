@@ -291,7 +291,7 @@ function createLoadableComponent<Props>(
       loading: null,
       delay: 200,
       timeout: null,
-      render: render,
+      render,
       webpack: null,
       modules: null,
     },
