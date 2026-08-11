@@ -334,7 +334,7 @@ function createLoadableComponent<Props>(
       // componentDidMount doesn't run on the server.
       if (this.context && Array.isArray(opts.modules)) {
         const report = this.context;
-        opts.modules.forEach((moduleName: string) => {
+        (opts.modules as string[]).forEach((moduleName: string) => {
           report(moduleName);
         });
       }
