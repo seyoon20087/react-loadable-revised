@@ -48,21 +48,28 @@ interface ConcatenatedModuleLike extends webpack.Module {
   rootModule: webpack.Module;
 }
 
-function isConcatenatedModuleLike(m: webpack.Module): m is ConcatenatedModuleLike {
+function isConcatenatedModuleLike(
+  m: webpack.Module,
+): m is ConcatenatedModuleLike {
   return m.constructor.name === "ConcatenatedModule";
 }
 
 function getRawRequest(mod: webpack.Module): string | undefined {
-  if ("rawRequest" in mod && typeof mod.rawRequest === "string") return mod.rawRequest;
+  if ("rawRequest" in mod && typeof mod.rawRequest === "string")
+    return mod.rawRequest;
 
-  if ("userRequest" in mod && typeof mod.userRequest === "string") return mod.userRequest;
+  if ("userRequest" in mod && typeof mod.userRequest === "string")
+    return mod.userRequest;
 
   if ("request" in mod && typeof mod.request === "string") return mod.request;
 
   return undefined;
 }
 
-function buildManifest(compiler: webpack.Compiler, compilation: webpack.Compilation): Manifest {
+function buildManifest(
+  compiler: webpack.Compiler,
+  compilation: webpack.Compilation,
+): Manifest {
   const context = compiler.options.context || "";
   const manifest: Manifest = {};
 
@@ -75,7 +82,10 @@ function buildManifest(compiler: webpack.Compiler, compilation: webpack.Compilat
       modules = Array.from(chunk.modulesIterable);
     } else if (typeof chunk.getModules === "function") {
       modules = chunk.getModules();
-    } else if ("forEachModule" in chunk && typeof chunk.forEachModule === "function") {
+    } else if (
+      "forEachModule" in chunk &&
+      typeof chunk.forEachModule === "function"
+    ) {
       chunk.forEachModule((m: any) => {
         modules.push(m);
       });
@@ -85,14 +95,24 @@ function buildManifest(compiler: webpack.Compiler, compilation: webpack.Compilat
       modules.forEach((module) => {
         // Safe module ID retrieval
         const id = (
-          compilation.chunkGraph ? compilation.chunkGraph.getModuleId(module) : module.id
+          compilation.chunkGraph
+            ? compilation.chunkGraph.getModuleId(module)
+            : module.id
         ) as string | number;
 
-        const name = typeof module.libIdent === "function" ? module.libIdent({ context }) : null;
+        const name =
+          typeof module.libIdent === "function"
+            ? module.libIdent({ context })
+            : null;
 
-        const publicPath = resolveUrl((compilation.outputOptions.publicPath as string) || "", file);
+        const publicPath = resolveUrl(
+          (compilation.outputOptions.publicPath as string) || "",
+          file,
+        );
 
-        const currentModule = isConcatenatedModuleLike(module) ? module.rootModule : module;
+        const currentModule = isConcatenatedModuleLike(module)
+          ? module.rootModule
+          : module;
 
         const rawRequest = getRawRequest(currentModule);
         if (rawRequest) {
@@ -134,7 +154,9 @@ export class ReactLoadablePlugin implements webpack.WebpackPluginInstance {
             let outputFilename = this.filename;
             if (isAbsolute(outputFilename)) {
               const outputPath =
-                compilation.outputOptions.path || compiler.options.output.path || "";
+                compilation.outputOptions.path ||
+                compiler.options.output.path ||
+                "";
               outputFilename = relative(outputPath, outputFilename);
             }
 
@@ -145,33 +167,39 @@ export class ReactLoadablePlugin implements webpack.WebpackPluginInstance {
       });
     } else if (compiler.hooks && compiler.hooks.emit) {
       // Legacy Webpack 4 Fallback
-      compiler.hooks.emit.tapAsync(pluginName, (compilation: any, callback: () => void) => {
-        const manifest = buildManifest(compiler, compilation);
-        const json = JSON.stringify(manifest, null, 2);
+      compiler.hooks.emit.tapAsync(
+        pluginName,
+        (compilation: any, callback: () => void) => {
+          const manifest = buildManifest(compiler, compilation);
+          const json = JSON.stringify(manifest, null, 2);
 
-        let outputFilename = this.filename;
-        if (isAbsolute(outputFilename)) {
-          const outputPath = compiler.options.output.path || "";
-          outputFilename = relative(outputPath, outputFilename);
-        }
+          let outputFilename = this.filename;
+          if (isAbsolute(outputFilename)) {
+            const outputPath = compiler.options.output.path || "";
+            outputFilename = relative(outputPath, outputFilename);
+          }
 
-        const source = {
-          source() {
-            return json;
-          },
-          size() {
-            return json.length;
-          },
-        };
+          const source = {
+            source() {
+              return json;
+            },
+            size() {
+              return json.length;
+            },
+          };
 
-        compilation.assets[outputFilename] = source;
-        callback();
-      });
+          compilation.assets[outputFilename] = source;
+          callback();
+        },
+      );
     }
   }
 }
 
-export function getBundles(manifest: Manifest, moduleIds: (string | number)[]): Bundle[] {
+export function getBundles(
+  manifest: Manifest,
+  moduleIds: (string | number)[],
+): Bundle[] {
   return moduleIds.reduce<Bundle[]>((bundles, moduleId) => {
     return bundles.concat(manifest[moduleId] || []);
   }, []);

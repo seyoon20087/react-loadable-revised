@@ -1,6 +1,11 @@
 import type { PluginObject, NodePath } from "@babel/core";
 import type * as babelTypes from "@babel/types";
-import type { ImportDeclaration, Node, Expression, ImportExpression } from "@babel/types";
+import type {
+  ImportDeclaration,
+  Node,
+  Expression,
+  ImportExpression,
+} from "@babel/types";
 
 interface BabelPluginAPI {
   types: typeof babelTypes;
@@ -73,7 +78,8 @@ export default function ({ types: t }: BabelPluginAPI): PluginObject {
           const loaderMethod = loaderProperty.get("value");
           if (Array.isArray(loaderMethod)) return;
 
-          const dynamicImports: Array<{ sourceNode: babelTypes.Expression }> = [];
+          const dynamicImports: Array<{ sourceNode: babelTypes.Expression }> =
+            [];
 
           // Create the visitor object dynamically
           const traverseVisitors: any = {
@@ -81,7 +87,9 @@ export default function ({ types: t }: BabelPluginAPI): PluginObject {
               const callExpr = importPath.parentPath;
               if (callExpr && callExpr.isCallExpression()) {
                 const callArgs = callExpr.get("arguments");
-                const firstArg = Array.isArray(callArgs) ? callArgs[0] : callArgs;
+                const firstArg = Array.isArray(callArgs)
+                  ? callArgs[0]
+                  : callArgs;
                 if (firstArg && !Array.isArray(firstArg)) {
                   dynamicImports.push({
                     sourceNode: firstArg.node as Expression,
@@ -115,7 +123,10 @@ export default function ({ types: t }: BabelPluginAPI): PluginObject {
                 t.arrayExpression(
                   dynamicImports.map((dynamicImport) => {
                     return t.callExpression(
-                      t.memberExpression(t.identifier("require"), t.identifier("resolveWeak")),
+                      t.memberExpression(
+                        t.identifier("require"),
+                        t.identifier("resolveWeak"),
+                      ),
                       [dynamicImport.sourceNode],
                     );
                   }),
