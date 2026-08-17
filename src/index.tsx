@@ -10,14 +10,14 @@ import {
 } from "react";
 
 // Webpack global module registry declaration
-declare const __webpack_modules__: any;
+declare const __webpack_modules__: Record<string | number, unknown> | undefined;
 
 // Public Interface Definitions
 export interface LoadingComponentProps {
   isLoading: boolean;
   pastDelay: boolean;
   timedOut: boolean;
-  error: any;
+  error: unknown;
   retry: () => void;
 }
 
@@ -65,8 +65,12 @@ export interface CommonOptions {
    * });
    * ```
    */
-  webpack?: (() => Array<string | number>) | null;
+  webpack?: (() => (string | number)[]) | null;
 }
+
+type ResolvableComponent<Props> =
+  | ComponentType<Props>
+  | { default: ComponentType<Props>; __esModule?: boolean };
 
 export interface OptionsWithoutRender<Props> extends CommonOptions {
   /**
@@ -74,10 +78,13 @@ export interface OptionsWithoutRender<Props> extends CommonOptions {
    *
    * Resulting React component receives all the props passed to the generated component.
    */
-  loader: () => Promise<ComponentType<Props> | { default: ComponentType<Props> }>;
+  loader: () => Promise<ResolvableComponent<Props>>;
 }
 
-export interface OptionsWithRender<Props, Exports extends object> extends CommonOptions {
+export interface OptionsWithRender<
+  Props,
+  Exports extends object,
+> extends CommonOptions {
   /**
    * Function returning a promise which returns an object to be passed to `render` on success.
    */
@@ -98,11 +105,6 @@ export interface OptionsWithRender<Props, Exports extends object> extends Common
    * ```
    */
   render(loaded: Exports, props: Props): ReactNode;
-
-  // NOTE: render is not optional if the loader return type is not compatible with the type
-  // expected in `OptionsWithoutRender`. If you do not want to provide a render function, ensure that your
-  // function is returning a promise for a React.ComponentType or is the result of import()ing a module
-  // that has a component as its `default` export.
 }
 
 export type Options<Props, Exports extends object> =
@@ -111,7 +113,7 @@ export type Options<Props, Exports extends object> =
 
 export interface OptionsWithMap<
   Props,
-  Exports extends { [key: string]: any },
+  Exports extends Record<string, unknown>,
 > extends CommonOptions {
   /**
    * An object containing functions which return promises, which resolve to an object to be passed to `render` on success.
@@ -143,10 +145,7 @@ export interface LoadableComponent {
    * This is useful for scenarios where you think the user might do something next and want to load the
    * next component eagerly.
    */
-
-  // Note: Changed return type from void to Promise<any> to match actual runtime behavior
-  // and prevent compilation errors when awaiting preloads in tests.
-  preload(): Promise<any>;
+  preload(): Promise<unknown>;
 }
 
 export interface LoadableCaptureProps {
@@ -161,26 +160,33 @@ export interface LoadableCaptureProps {
 interface LoadState<T> {
   loading: boolean;
   loaded: T | null;
-  error: any;
+  error: unknown;
   promise: Promise<T>;
 }
 
-const ALL_INITIALIZERS: Array<() => Promise<any>> = [];
-const READY_INITIALIZERS: Array<() => Promise<any> | undefined> = [];
+type Initializer = () => Promise<unknown> | undefined;
 
-function isWebpackReady(getModuleIds: () => Array<string | number>): boolean {
-  if (typeof __webpack_modules__ !== "object") {
+const ALL_INITIALIZERS: (() => Promise<unknown>)[] = [];
+const READY_INITIALIZERS: Initializer[] = [];
+
+function isWebpackReady(getModuleIds: () => (string | number)[]): boolean {
+  if (typeof __webpack_modules__ !== "object" || __webpack_modules__ === null) {
     return false;
   }
 
   return getModuleIds().every((moduleId) => {
-    return typeof moduleId !== "undefined" && typeof __webpack_modules__[moduleId] !== "undefined";
+    return (
+      typeof moduleId !== "undefined" &&
+      typeof __webpack_modules__[moduleId] !== "undefined"
+    );
   });
 }
 
 type LoadableCaptureContextType = (moduleName: string) => void;
 
-const LoadableCaptureContext = createContext<LoadableCaptureContextType | null>(null);
+const LoadableCaptureContext = createContext<LoadableCaptureContextType | null>(
+  null,
+);
 
 function load<T>(loader: () => Promise<T>): LoadState<T> {
   const promise = loader();
@@ -189,45 +195,41 @@ function load<T>(loader: () => Promise<T>): LoadState<T> {
     loading: true,
     loaded: null,
     error: null,
-    promise: null as any,
+    promise: promise
+      .then((loaded) => {
+        state.loading = false;
+        state.loaded = loaded;
+        return loaded;
+      })
+      .catch((err) => {
+        state.loading = false;
+        state.error = err;
+        throw err;
+      }),
   };
-
-  state.promise = promise
-    .then((loaded) => {
-      state.loading = false;
-      state.loaded = loaded;
-      return loaded;
-    })
-    .catch((err) => {
-      state.loading = false;
-      state.error = err;
-      throw err;
-    });
 
   return state;
 }
 
-function loadMap<T extends { [key: string]: () => Promise<any> }>(obj: T) {
-  const state: {
-    loading: boolean;
-    loaded: { [K in keyof T]?: any };
-    error: any;
-    promise: Promise<any>;
-  } = {
+function loadMap<Exports extends Record<string, unknown>>(obj: {
+  [K in keyof Exports]: () => Promise<Exports[K]>;
+}): LoadState<Exports> {
+  const loadedMap = {} as Partial<Exports>;
+  const promises: Promise<unknown>[] = [];
+
+  const state: Partial<LoadState<Exports>> = {
     loading: false,
-    loaded: {},
+    loaded: loadedMap as Exports,
     error: null,
-    promise: null as any,
   };
 
-  const promises: Array<Promise<any>> = [];
-
   try {
-    Object.keys(obj).forEach((key) => {
+    const keys = Object.keys(obj) as (keyof Exports)[];
+    keys.forEach((key) => {
       const result = load(obj[key]);
 
       if (!result.loading) {
-        state.loaded[key as keyof T] = result.loaded;
+        loadedMap[key] = result.loaded!;
         state.error = result.error;
       } else {
         state.loading = true;
@@ -237,9 +239,9 @@ function loadMap<T extends { [key: string]: () => Promise<any> }>(obj: T) {
 
       result.promise
         .then((res) => {
-          state.loaded[key as keyof T] = res;
+          loadedMap[key] = res;
         })
-        .catch((err) => {
+        .catch((err: unknown) => {
           state.error = err;
         });
     });
@@ -248,59 +250,90 @@ function loadMap<T extends { [key: string]: () => Promise<any> }>(obj: T) {
   }
 
   state.promise = Promise.all(promises)
-    .then((res) => {
+    .then(() => {
       state.loading = false;
-      return res;
+      return loadedMap as Exports;
     })
-    .catch((err) => {
+    .catch((err: unknown) => {
       state.loading = false;
       throw err;
     });
 
-  return state;
+  return state as LoadState<Exports>;
 }
 
-function resolve(obj: any): any {
-  return obj && obj.__esModule ? obj.default : obj;
+function resolve<Props extends object>(
+  obj: ResolvableComponent<Props>,
+): ComponentType<Props> {
+  if (
+    obj &&
+    typeof obj === "object" &&
+    "__esModule" in obj &&
+    obj.__esModule &&
+    "default" in obj
+  ) {
+    return obj.default;
+  }
+  return obj as ComponentType<Props>;
 }
 
-function render<Props>(loaded: any, props: Props): ReactNode {
+function render<Props extends object>(
+  loaded: ResolvableComponent<Props>,
+  props: Props,
+): ReactNode {
   const ResolvedComponent = resolve(loaded);
   return <ResolvedComponent {...props} />;
 }
 
-interface ComponentState {
-  error: any;
+interface ComponentState<Loaded> {
+  error: unknown;
   pastDelay: boolean;
   timedOut: boolean;
   loading: boolean;
-  loaded: any;
+  loaded: Loaded | null;
 }
 
-function createLoadableComponent<Props>(
-  loadFn: (loader: any) => any,
-  options: any,
-): ComponentClass<Props> & LoadableComponent {
-  if (!options.loading) {
+interface LoadableBaseOptions<Props, Loaded, Loader> extends CommonOptions {
+  loader: Loader;
+  render?: (loaded: Loaded, props: Props) => ReactNode;
+}
+
+function createLoadableComponent<Props, Loaded, Loader>(
+  loadFn: (loader: Loader) => LoadState<Loaded>,
+  options: LoadableBaseOptions<Props, Loaded, Loader>,
+): ComponentClass<Props, ComponentState<Loaded>> & LoadableComponent {
+  const {
+    loader,
+    loading,
+    delay = 200,
+    timeout = null,
+    render: renderFn = render as unknown as (
+      loaded: Loaded,
+      props: Props,
+    ) => ReactNode,
+    webpack = null,
+    modules = null,
+    ...restOptions
+  } = options;
+
+  if (!loading) {
     throw new Error("react-loadable requires a `loading` component");
   }
 
-  const opts = Object.assign(
-    {
-      loader: null,
-      loading: null,
-      delay: 200,
-      timeout: null,
-      render,
-      webpack: null,
-      modules: null,
-    },
-    options,
-  );
+  const opts = {
+    loader,
+    loading,
+    delay,
+    timeout,
+    render: renderFn,
+    webpack,
+    modules,
+    ...restOptions,
+  };
 
-  let res: any = null;
+  let res: LoadState<Loaded> | null = null;
 
-  function init() {
+  function init(): Promise<Loaded> {
     if (!res) {
       res = loadFn(opts.loader);
     }
@@ -311,15 +344,17 @@ function createLoadableComponent<Props>(
 
   if (typeof opts.webpack === "function") {
     READY_INITIALIZERS.push(() => {
-      if (isWebpackReady(opts.webpack)) {
-        return init();
-      }
+      return typeof opts.webpack === "function" && isWebpackReady(opts.webpack)
+        ? init()
+        : undefined;
     });
   }
 
-  return class LoadableComponent extends Component<Props, ComponentState> {
+  return class LoadableComponent extends Component<
+    Props,
+    ComponentState<Loaded>
+  > {
     private _mounted = false;
-    // ReturnType<typeof setTimeout> safely handles both Node.js SSR and Browser timers
     private _delay?: ReturnType<typeof setTimeout>;
     private _timeout?: ReturnType<typeof setTimeout>;
 
@@ -334,21 +369,21 @@ function createLoadableComponent<Props>(
       // componentDidMount doesn't run on the server.
       if (this.context && Array.isArray(opts.modules)) {
         const report = this.context;
-        (opts.modules as string[]).forEach((moduleName: string) => {
+        for (const moduleName of opts.modules) {
           report(moduleName);
-        });
+        }
       }
 
       this.state = {
-        error: res.error,
+        error: res!.error,
         pastDelay: false,
         timedOut: false,
-        loading: res.loading,
-        loaded: res.loaded,
+        loading: res!.loading,
+        loaded: res!.loaded,
       };
     }
 
-    static preload() {
+    static preload(): Promise<Loaded> {
       return init();
     }
 
@@ -357,16 +392,18 @@ function createLoadableComponent<Props>(
       this._loadModule();
     }
 
-    _loadModule() {
-      if (!res.loading) {
+    private _loadModule() {
+      if (!res!.loading) {
         return;
       }
 
-      const setStateWithMountCheck = (newState: Partial<ComponentState>) => {
+      const setStateWithMountCheck = (
+        newState: Partial<ComponentState<Loaded>>,
+      ) => {
         if (!this._mounted) {
           return;
         }
-        this.setState(newState as ComponentState);
+        this.setState(newState as ComponentState<Loaded>);
       };
 
       if (typeof opts.delay === "number") {
@@ -387,20 +424,20 @@ function createLoadableComponent<Props>(
 
       const update = () => {
         setStateWithMountCheck({
-          error: res.error,
-          loaded: res.loaded,
-          loading: res.loading,
+          error: res!.error,
+          loaded: res!.loaded,
+          loading: res!.loading,
         });
 
         this._clearTimeouts();
       };
 
-      res.promise
+      res!.promise
         .then(() => {
           update();
           return null;
         })
-        .catch((_err: any) => {
+        .catch((_err: unknown) => {
           update();
           return null;
         });
@@ -411,9 +448,9 @@ function createLoadableComponent<Props>(
       this._clearTimeouts();
     }
 
-    _clearTimeouts() {
-      clearTimeout(this._delay);
-      clearTimeout(this._timeout);
+    private _clearTimeouts() {
+      if (this._delay) clearTimeout(this._delay);
+      if (this._timeout) clearTimeout(this._timeout);
     }
 
     retry = () => {
@@ -422,7 +459,7 @@ function createLoadableComponent<Props>(
       this._loadModule();
     };
 
-    preload() {
+    preload(): Promise<Loaded> {
       return init();
     }
 
@@ -449,9 +486,22 @@ function createLoadableComponent<Props>(
 
 // Main Loadable Factory Function Overloads
 function Loadable<Props, Exports extends object>(
+  options: OptionsWithRender<Props, Exports>,
+): ComponentClass<Props> & LoadableComponent;
+function Loadable<Props>(
+  options: OptionsWithoutRender<Props>,
+): ComponentClass<Props> & LoadableComponent;
+function Loadable<Props, Exports extends object>(
   options: Options<Props, Exports>,
-): ComponentType<Props> & LoadableComponent {
-  return createLoadableComponent(load, options);
+): ComponentClass<Props> & LoadableComponent {
+  return createLoadableComponent(
+    load,
+    options as LoadableBaseOptions<
+      Props,
+      Exports | ResolvableComponent<Props>,
+      () => Promise<Exports | ResolvableComponent<Props>>
+    >,
+  );
 }
 declare namespace Loadable {
   export let Map: typeof LoadableMap;
@@ -487,9 +537,9 @@ declare namespace Loadable {
   export let preloadReady: () => Promise<void>;
 }
 
-function LoadableMap<Props, Exports extends { [key: string]: any }>(
+function LoadableMap<Props, Exports extends Record<string, unknown>>(
   options: OptionsWithMap<Props, Exports>,
-): ComponentType<Props> & LoadableComponent {
+): ComponentClass<Props> & LoadableComponent {
   if (typeof options.render !== "function") {
     throw new Error("LoadableMap requires a `render(loaded, props)` function");
   }
@@ -507,8 +557,8 @@ const Capture: FC<LoadableCaptureProps> = ({ report, children }) => (
 
 Loadable.Capture = Capture;
 
-function flushInitializers(initializers: Array<() => Promise<any> | undefined>): any {
-  const promises: Array<Promise<any>> = [];
+function flushInitializers(initializers: Initializer[]): Promise<void> {
+  const promises: Promise<unknown>[] = [];
 
   while (initializers.length) {
     const init = initializers.pop();
@@ -521,9 +571,7 @@ function flushInitializers(initializers: Array<() => Promise<any> | undefined>):
   }
 
   return Promise.all(promises).then(() => {
-    if (initializers.length) {
-      return flushInitializers(initializers);
-    }
+    return initializers.length ? flushInitializers(initializers) : undefined;
   });
 }
 
