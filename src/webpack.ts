@@ -1,5 +1,5 @@
 import { relative, isAbsolute } from "node:path";
-import type webpack from "webpack";
+import type * as webpack from "webpack";
 
 // Public Type Interfaces
 export interface Bundle {
@@ -44,38 +44,57 @@ function resolveUrl(publicPath: string, file: string): string {
   return `${base}${file}`;
 }
 
-function buildManifest(compiler: webpack.Compiler, compilation: any): Manifest {
+interface ConcatenatedModuleLike extends webpack.Module {
+  rootModule: webpack.Module;
+}
+
+function isConcatenatedModuleLike(m: webpack.Module): m is ConcatenatedModuleLike {
+  return m.constructor.name === "ConcatenatedModule";
+}
+
+function getRawRequest(mod: webpack.Module): string | undefined {
+  if ("rawRequest" in mod && typeof mod.rawRequest === "string") return mod.rawRequest;
+
+  if ("userRequest" in mod && typeof mod.userRequest === "string") return mod.userRequest;
+
+  if ("request" in mod && typeof mod.request === "string") return mod.request;
+
+  return undefined;
+}
+
+function buildManifest(compiler: webpack.Compiler, compilation: webpack.Compilation): Manifest {
   const context = compiler.options.context || "";
   const manifest: Manifest = {};
 
-  compilation.chunks.forEach((chunk: any) => {
+  compilation.chunks.forEach((chunk) => {
     // Safe module retrieval prioritizing modern properties to avoid deprecation logs
-    let modules: any[] = [];
+    let modules: webpack.Module[] = [];
     if (compilation.chunkGraph) {
       modules = compilation.chunkGraph.getChunkModules(chunk);
     } else if (chunk.modulesIterable) {
       modules = Array.from(chunk.modulesIterable);
     } else if (typeof chunk.getModules === "function") {
       modules = chunk.getModules();
-    } else if (typeof chunk.forEachModule === "function") {
+    } else if ("forEachModule" in chunk && typeof chunk.forEachModule === "function") {
       chunk.forEachModule((m: any) => {
         modules.push(m);
       });
     }
 
-    chunk.files.forEach((file: string) => {
-      modules.forEach((module: any) => {
+    chunk.files.forEach((file) => {
+      modules.forEach((module) => {
         // Safe module ID retrieval
-        const id = compilation.chunkGraph ? compilation.chunkGraph.getModuleId(module) : module.id;
+        const id = (
+          compilation.chunkGraph ? compilation.chunkGraph.getModuleId(module) : module.id
+        ) as string | number;
 
         const name = typeof module.libIdent === "function" ? module.libIdent({ context }) : null;
 
-        const publicPath = resolveUrl(compilation.outputOptions.publicPath || "", file);
+        const publicPath = resolveUrl((compilation.outputOptions.publicPath as string) || "", file);
 
-        const currentModule =
-          module.constructor.name === "ConcatenatedModule" ? module.rootModule : module;
+        const currentModule = isConcatenatedModuleLike(module) ? module.rootModule : module;
 
-        const rawRequest = (currentModule as any).rawRequest;
+        const rawRequest = getRawRequest(currentModule);
         if (rawRequest) {
           if (!manifest[rawRequest]) {
             manifest[rawRequest] = [];
@@ -98,15 +117,15 @@ export class ReactLoadablePlugin implements webpack.WebpackPluginInstance {
 
   apply(compiler: webpack.Compiler): void {
     const pluginName = "ReactLoadablePlugin";
-    const isWebpack5 = !!(compiler.webpack && (compiler.webpack as any).Compilation);
+    const isWebpack5 = !!(compiler.webpack && compiler.webpack.Compilation);
 
     if (isWebpack5) {
       // Modern Webpack 5 Asset Generation Pipeline
-      compiler.hooks.thisCompilation.tap(pluginName, (compilation: any) => {
+      compiler.hooks.thisCompilation.tap(pluginName, (compilation) => {
         compilation.hooks.processAssets.tap(
           {
             name: pluginName,
-            stage: (compiler.webpack as any).Compilation.PROCESS_ASSETS_STAGE_ADDITIONAL,
+            stage: compiler.webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONAL,
           },
           () => {
             const manifest = buildManifest(compiler, compilation);
@@ -119,7 +138,7 @@ export class ReactLoadablePlugin implements webpack.WebpackPluginInstance {
               outputFilename = relative(outputPath, outputFilename);
             }
 
-            const source = new (compiler.webpack as any).sources.RawSource(json);
+            const source = new compiler.webpack.sources.RawSource(json);
             compilation.emitAsset(outputFilename, source);
           },
         );
