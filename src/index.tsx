@@ -170,7 +170,7 @@ const ALL_INITIALIZERS: (() => Promise<unknown>)[] = [];
 const READY_INITIALIZERS: Initializer[] = [];
 
 function isWebpackReady(getModuleIds: () => (string | number)[]): boolean {
-  if (typeof __webpack_modules__ !== "object" || __webpack_modules__ === null) {
+  if (typeof __webpack_modules__ !== "object") {
     return false;
   }
 
