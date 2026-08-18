@@ -4,7 +4,6 @@ import {
   Children,
   type ReactNode,
   type ComponentType,
-  type ComponentClass,
   type FC,
   type ContextType,
 } from "react";
@@ -144,6 +143,9 @@ export interface LoadableComponent {
    * The generated component has a static method preload() for calling the loader function ahead of time.
    * This is useful for scenarios where you think the user might do something next and want to load the
    * next component eagerly.
+   * 
+   * Note: This returns a promise, but you should avoid waiting for that promise to resolve
+   * to update your UI. In most cases doing so creates a bad user experience.
    */
   preload(): Promise<unknown>;
 }
@@ -301,7 +303,7 @@ interface LoadableBaseOptions<Props, Loaded, Loader> extends CommonOptions {
 function createLoadableComponent<Props, Loaded, Loader>(
   loadFn: (loader: Loader) => LoadState<Loaded>,
   options: LoadableBaseOptions<Props, Loaded, Loader>,
-): ComponentClass<Props, ComponentState<Loaded>> & LoadableComponent {
+): ComponentType<Props> & LoadableComponent {
   const {
     loader,
     loading,
@@ -487,13 +489,13 @@ function createLoadableComponent<Props, Loaded, Loader>(
 // Main Loadable Factory Function Overloads
 function Loadable<Props, Exports extends object>(
   options: OptionsWithRender<Props, Exports>,
-): ComponentClass<Props> & LoadableComponent;
+): ComponentType<Props> & LoadableComponent;
 function Loadable<Props>(
   options: OptionsWithoutRender<Props>,
-): ComponentClass<Props> & LoadableComponent;
+): ComponentType<Props> & LoadableComponent;
 function Loadable<Props, Exports extends object>(
   options: Options<Props, Exports>,
-): ComponentClass<Props> & LoadableComponent {
+): ComponentType<Props> & LoadableComponent {
   return createLoadableComponent(
     load,
     options as LoadableBaseOptions<
@@ -539,7 +541,7 @@ declare namespace Loadable {
 
 function LoadableMap<Props, Exports extends Record<string, unknown>>(
   options: OptionsWithMap<Props, Exports>,
-): ComponentClass<Props> & LoadableComponent {
+): ComponentType<Props> & LoadableComponent {
   if (typeof options.render !== "function") {
     throw new Error("LoadableMap requires a `render(loaded, props)` function");
   }
