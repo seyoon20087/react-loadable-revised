@@ -10,3 +10,4 @@ webpack.config.js
 .babelrc
 coverage
 tsconfig.json
+.oxfmtrc.json
