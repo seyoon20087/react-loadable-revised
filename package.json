@@ -8,22 +8,37 @@
   },
   "main": "./lib/index.cjs",
   "module": "./lib/index.mjs",
-  "types": "./lib/index.d.mts",
+  "types": "./lib/index.d.cts",
   "exports": {
     ".": {
-      "require": "./lib/index.cjs",
-      "default": "./lib/index.mjs",
-      "types": "./lib/index.d.mts"
+      "import": {
+        "types": "./lib/index.d.mts",
+        "default": "./lib/index.mjs"
+      },
+      "require": {
+        "types": "./lib/index.d.cts",
+        "default": "./lib/index.cjs"
+      }
     },
     "./webpack": {
-      "require": "./lib/webpack.cjs",
-      "default": "./lib/webpack.mjs",
-      "types": "./lib/webpack.d.mts"
+      "import": {
+        "types": "./lib/webpack.d.mts",
+        "default": "./lib/webpack.mjs"
+      },
+      "require": {
+        "types": "./lib/webpack.d.cts",
+        "default": "./lib/webpack.cjs"
+      }
     },
     "./babel": {
-      "require": "./lib/babel.cjs",
-      "default": "./lib/babel.mjs",
-      "types": "./lib/babel.d.mts"
+      "import": {
+        "types": "./lib/babel.d.mts",
+        "default": "./lib/babel.mjs"
+      },
+      "require": {
+        "types": "./lib/babel.d.cts",
+        "default": "./lib/babel.cjs"
+      }
     }
   },
   "publishConfig": {
