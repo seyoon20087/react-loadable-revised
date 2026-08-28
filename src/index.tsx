@@ -143,7 +143,7 @@ export interface LoadableComponent {
    * The generated component has a static method preload() for calling the loader function ahead of time.
    * This is useful for scenarios where you think the user might do something next and want to load the
    * next component eagerly.
-   * 
+   *
    * Note: This returns a promise, but you should avoid waiting for that promise to resolve
    * to update your UI. In most cases doing so creates a bad user experience.
    */
