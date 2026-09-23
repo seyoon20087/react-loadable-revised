@@ -4,7 +4,6 @@ import {
   Children,
   type ReactNode,
   type ComponentType,
-  type FC,
   type ContextType,
 } from "react";
 
@@ -16,9 +15,13 @@ export interface LoadingComponentProps {
   isLoading: boolean;
   pastDelay: boolean;
   timedOut: boolean;
-  error: unknown;
+  error: any;
   retry: () => void;
 }
+
+export type Options<Props, Exports extends object> =
+  | OptionsWithoutRender<Props>
+  | OptionsWithRender<Props, Exports>;
 
 export interface CommonOptions {
   /**
@@ -33,13 +36,13 @@ export interface CommonOptions {
    *
    * Only show the loading component if the loader() has taken this long to succeed or error.
    */
-  delay?: number | false | null;
+  delay?: number | false | null | undefined;
   /**
    * Disabled by default.
    *
    * After the specified time in milliseconds passes, the component's `timedOut` prop will be set to true.
    */
-  timeout?: number | false | null;
+  timeout?: number | false | null | undefined;
 
   /**
    * Optional array of module paths that `Loadable.Capture`'s `report` function will be applied on during
@@ -51,7 +54,7 @@ export interface CommonOptions {
    * });
    * ```
    */
-  modules?: string[] | null;
+  modules?: string[] | undefined;
 
   /**
    * An optional function which returns an array of Webpack module ids which you can get
@@ -64,12 +67,12 @@ export interface CommonOptions {
    * });
    * ```
    */
-  webpack?: (() => (string | number)[]) | null;
+  webpack?: (() => Array<string | number>) | undefined;
 }
 
 type ResolvableComponent<Props> =
   | ComponentType<Props>
-  | { default: ComponentType<Props>; __esModule?: boolean };
+  | { default: ComponentType<Props> };
 
 export interface OptionsWithoutRender<Props> extends CommonOptions {
   /**
@@ -77,7 +80,7 @@ export interface OptionsWithoutRender<Props> extends CommonOptions {
    *
    * Resulting React component receives all the props passed to the generated component.
    */
-  loader: () => Promise<ResolvableComponent<Props>>;
+  loader(): Promise<ComponentType<Props> | { default: ComponentType<Props> }>;
 }
 
 export interface OptionsWithRender<
@@ -87,7 +90,7 @@ export interface OptionsWithRender<
   /**
    * Function returning a promise which returns an object to be passed to `render` on success.
    */
-  loader: () => Promise<Exports>;
+  loader(): Promise<Exports>;
   /**
    * If you want to customize what gets rendered from your loader you can also pass `render`.
    *
@@ -104,15 +107,16 @@ export interface OptionsWithRender<
    * ```
    */
   render(loaded: Exports, props: Props): ReactNode;
-}
 
-export type Options<Props, Exports extends object> =
-  | OptionsWithoutRender<Props>
-  | OptionsWithRender<Props, Exports>;
+  // NOTE: render is not optional if the loader return type is not compatible with the type
+  // expected in `OptionsWithoutRender`. If you do not want to provide a render function, ensure that your
+  // function is returning a promise for a React.ComponentType or is the result of import()ing a module
+  // that has a component as its `default` export.
+}
 
 export interface OptionsWithMap<
   Props,
-  Exports extends Record<string, unknown>,
+  Exports extends { [key: string]: any },
 > extends CommonOptions {
   /**
    * An object containing functions which return promises, which resolve to an object to be passed to `render` on success.
@@ -156,6 +160,46 @@ export interface LoadableCaptureProps {
    */
   report: (moduleName: string) => void;
   children: ReactNode;
+}
+
+export interface Loadable {
+  <Props, Exports extends object>(
+    options: Options<Props, Exports>,
+  ): ComponentType<Props> & LoadableComponent;
+  Map<Props, Exports extends { [key: string]: any }>(
+    options: OptionsWithMap<Props, Exports>,
+  ): ComponentType<Props> & LoadableComponent;
+
+  /**
+   * This will call all of the LoadableComponent.preload methods recursively until they are all
+   * resolved. Allowing you to preload all of your dynamic modules in environments like the server.
+   * ```ts
+   * Loadable.preloadAll().then(() => {
+   *   app.listen(3000, () => {
+   *     console.log('Running on http://localhost:3000/');
+   *   });
+   * });
+   * ```
+   */
+  preloadAll(): Promise<void>;
+
+  /**
+   * Check for modules that are already loaded in the browser and call the matching
+   * `LoadableComponent.preload` methods.
+   * ```ts
+   * window.main = () => {
+   *   Loadable.preloadReady().then(() => {
+   *     ReactDOM.hydrate(
+   *       <App/>,
+   *       document.getElementById('app'),
+   *     );
+   *   });
+   * };
+   * ```
+   */
+  preloadReady(): Promise<void>;
+
+  Capture: ComponentType<LoadableCaptureProps>;
 }
 
 // Internal State Tracker Structures
@@ -213,7 +257,7 @@ function load<T>(loader: () => Promise<T>): LoadState<T> {
   return state;
 }
 
-function loadMap<Exports extends Record<string, unknown>>(obj: {
+function loadMap<Exports extends { [key: string]: any }>(obj: {
   [K in keyof Exports]: () => Promise<Exports[K]>;
 }): LoadState<Exports> {
   const loadedMap = {} as Partial<Exports>;
@@ -486,14 +530,7 @@ function createLoadableComponent<Props, Loaded, Loader>(
   };
 }
 
-// Main Loadable Factory Function Overloads
-function Loadable<Props, Exports extends object>(
-  options: OptionsWithRender<Props, Exports>,
-): ComponentType<Props> & LoadableComponent;
-function Loadable<Props>(
-  options: OptionsWithoutRender<Props>,
-): ComponentType<Props> & LoadableComponent;
-function Loadable<Props, Exports extends object>(
+function LoadableFn<Props, Exports extends object>(
   options: Options<Props, Exports>,
 ): ComponentType<Props> & LoadableComponent {
   return createLoadableComponent(
@@ -505,41 +542,8 @@ function Loadable<Props, Exports extends object>(
     >,
   );
 }
-declare namespace Loadable {
-  export let Map: typeof LoadableMap;
-  export let Capture: FC<LoadableCaptureProps>;
 
-  /**
-   * This will call all of the LoadableComponent.preload methods recursively until they are all
-   * resolved. Allowing you to preload all of your dynamic modules in environments like the server.
-   * ```ts
-   * Loadable.preloadAll().then(() => {
-   *   app.listen(3000, () => {
-   *     console.log('Running on http://localhost:3000/');
-   *   });
-   * });
-   * ```
-   */
-  export let preloadAll: () => Promise<void>;
-
-  /**
-   * Check for modules that are already loaded in the browser and call the matching
-   * `LoadableComponent.preload` methods.
-   * ```ts
-   * window.main = () => {
-   *   Loadable.preloadReady().then(() => {
-   *     ReactDOM.hydrate(
-   *       <App/>,
-   *       document.getElementById('app'),
-   *     );
-   *   });
-   * };
-   * ```
-   */
-  export let preloadReady: () => Promise<void>;
-}
-
-function LoadableMap<Props, Exports extends Record<string, unknown>>(
+function LoadableMap<Props, Exports extends { [key: string]: any }>(
   options: OptionsWithMap<Props, Exports>,
 ): ComponentType<Props> & LoadableComponent {
   if (typeof options.render !== "function") {
@@ -549,15 +553,11 @@ function LoadableMap<Props, Exports extends Record<string, unknown>>(
   return createLoadableComponent(loadMap, options);
 }
 
-Loadable.Map = LoadableMap;
-
-const Capture: FC<LoadableCaptureProps> = ({ report, children }) => (
+const Capture: ComponentType<LoadableCaptureProps> = ({ report, children }) => (
   <LoadableCaptureContext.Provider value={report}>
     {Children.only(children)}
   </LoadableCaptureContext.Provider>
 );
-
-Loadable.Capture = Capture;
 
 function flushInitializers(initializers: Initializer[]): Promise<void> {
   const promises: Promise<unknown>[] = [];
@@ -583,8 +583,6 @@ const preloadAll = (): Promise<void> => {
   });
 };
 
-Loadable.preloadAll = preloadAll;
-
 const preloadReady = (): Promise<void> => {
   return new Promise<void>((resolve) => {
     // We always will resolve, errors should be handled within loading UIs.
@@ -592,6 +590,11 @@ const preloadReady = (): Promise<void> => {
   });
 };
 
-Loadable.preloadReady = preloadReady;
+const LoadableExport: Loadable = Object.assign(LoadableFn, {
+  Map: LoadableMap,
+  Capture,
+  preloadAll,
+  preloadReady,
+});
 
-export default Loadable;
+export default LoadableExport;

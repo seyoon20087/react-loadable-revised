@@ -1,6 +1,6 @@
 {
   "name": "@seyoon20087/react-loadable",
-  "version": "6.0.7",
+  "version": "6.0.8",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -55,8 +55,8 @@
   "devDependencies": {
     "@babel/core": "^8.0.1",
     "@babel/types": "^8.0.4",
-    "@rstest/core": "^0.11.2",
-    "@rstest/coverage-istanbul": "0.11.2",
+    "@rstest/core": "^0.12.1",
+    "@rstest/coverage-istanbul": "^0.12.1",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.2",
     "@types/node": "^26.1.1",
@@ -65,7 +65,7 @@
     "oxfmt": "^0.62.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "tsdown": "^0.22.9",
+    "tsdown": "^0.23.0",
     "typescript": "^7.0.2",
     "webpack": "^5.109.2"
   },

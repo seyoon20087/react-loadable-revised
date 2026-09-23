@@ -18,9 +18,6 @@ export default defineConfig({
     },
     cjs: {
       target: ["es2022"], // node 18 or higher
-      dts: {
-        cjsReexport: true,
-      },
     },
   },
   deps: {
